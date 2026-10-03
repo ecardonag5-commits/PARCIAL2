@@ -21,6 +21,7 @@ public class VentanaPrincipal extends JFrame {
     private JTextField txtNombre;
     private JTextField txtDepartamento;
     private JTextField txtSalario;
+    private JTextField txtBono;
     private JTextField txtFecha;
     private JCheckBox chkActivo;
 
@@ -37,7 +38,7 @@ public class VentanaPrincipal extends JFrame {
         setLayout(new BorderLayout(10, 10));
 
         // --- PANEL SUPERIOR: FORMULARIO ---
-        JPanel panelFormulario = new JPanel(new GridLayout(6, 2, 5, 5));
+        JPanel panelFormulario = new JPanel(new GridLayout(7, 2, 5, 5));
         panelFormulario.setBorder(BorderFactory.createTitledBorder("Datos del Empleado"));
 
         panelFormulario.add(new JLabel(" ID:"));
@@ -57,6 +58,10 @@ public class VentanaPrincipal extends JFrame {
         txtSalario = new JTextField();
         panelFormulario.add(txtSalario);
 
+        panelFormulario.add(new JLabel(" Bono:"));
+        txtBono = new JTextField("0");
+        panelFormulario.add(txtBono);
+
         panelFormulario.add(new JLabel(" Fecha Contratación (YYYY-MM-DD):"));
         txtFecha = new JTextField();
         panelFormulario.add(txtFecha);
@@ -68,7 +73,7 @@ public class VentanaPrincipal extends JFrame {
         add(panelFormulario, BorderLayout.NORTH);
 
         // --- PANEL CENTRAL: TABLA ---
-        String[] columnas = {"ID", "Nombre Completo", "Departamento", "Salario", "Fecha Contratación", "Estado"};
+        String[] columnas = {"ID", "Nombre Completo", "Departamento", "Salario", "Bono", "Fecha Contratación", "Estado"};
         modeloTabla = new DefaultTableModel(columnas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -88,6 +93,11 @@ public class VentanaPrincipal extends JFrame {
         add(new JScrollPane(tabla), BorderLayout.CENTER);
 
         // --- PANEL INFERIOR: BOTONES ---
+        JPanel panelInferior = new JPanel(new BorderLayout());
+        JLabel lblTotalSueldos = new JLabel("Total de sueldos: Q0.00");
+        lblTotalSueldos.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
+        panelInferior.add(lblTotalSueldos, BorderLayout.WEST);
+
         JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
 
         btnGuardar = new JButton("Guardar");
@@ -100,7 +110,8 @@ public class VentanaPrincipal extends JFrame {
         panelBotones.add(btnEliminar);
         panelBotones.add(btnLimpiar);
 
-        add(panelBotones, BorderLayout.SOUTH);
+        panelInferior.add(panelBotones, BorderLayout.CENTER);
+        add(panelInferior, BorderLayout.SOUTH);
 
         // --- EVENTOS DE LOS BOTONES ---
         btnGuardar.addActionListener(e -> guardarEmpleado());
@@ -121,9 +132,23 @@ public class VentanaPrincipal extends JFrame {
                 emp.getNombreCompleto(),
                 emp.getDepartamento(),
                 String.format("Q%.2f", emp.getSalarioMensual()),
+                String.format("Q%.2f", emp.getBono()),
                 emp.getFechaContratacion(),
                 emp.getEstadoTexto()
             });
+        }
+        actualizarTotalSueldos(empleados);
+    }
+
+    private void actualizarTotalSueldos(List<Empleado> empleados) {
+        double total = 0;
+        for (Empleado emp : empleados) {
+            total += emp.getSalarioMensual() + emp.getBono();
+        }
+        // El total representa salario mensual + bono de todos los empleados.
+        Component[] componentes = ((JPanel)getContentPane().getComponent(2)).getComponents();
+        if (componentes.length > 0 && componentes[0] instanceof JLabel) {
+            ((JLabel) componentes[0]).setText(String.format("Total de sueldos: Q%.2f", total));
         }
     }
 
@@ -137,9 +162,12 @@ public class VentanaPrincipal extends JFrame {
             String salarioStr = modeloTabla.getValueAt(fila, 3).toString().replace("Q", "").replace(",", "").trim();
             txtSalario.setText(salarioStr);
 
-            txtFecha.setText(modeloTabla.getValueAt(fila, 4).toString());
+            String bonoStr = modeloTabla.getValueAt(fila, 4).toString().replace("Q", "").replace(",", "").trim();
+            txtBono.setText(bonoStr);
 
-            boolean activo = modeloTabla.getValueAt(fila, 5).toString().equalsIgnoreCase("Activo");
+            txtFecha.setText(modeloTabla.getValueAt(fila, 5).toString());
+
+            boolean activo = modeloTabla.getValueAt(fila, 6).toString().equalsIgnoreCase("Activo");
             chkActivo.setSelected(activo);
         }
     }
@@ -151,10 +179,11 @@ public class VentanaPrincipal extends JFrame {
             String nombre = txtNombre.getText().trim();
             String depto = txtDepartamento.getText().trim();
             double salario = Double.parseDouble(txtSalario.getText().trim());
+            double bono = Double.parseDouble(txtBono.getText().trim());
             LocalDate fecha = LocalDate.parse(txtFecha.getText().trim());
             boolean activo = chkActivo.isSelected();
 
-            Empleado emp = new Empleado(nombre, depto, salario, fecha, activo);
+            Empleado emp = new Empleado(nombre, depto, salario, bono, fecha, activo);
             if (dao.insertar(emp)) {
                 JOptionPane.showMessageDialog(this, "Empleado registrado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
                 limpiarCampos();
@@ -180,10 +209,11 @@ public class VentanaPrincipal extends JFrame {
             String nombre = txtNombre.getText().trim();
             String depto = txtDepartamento.getText().trim();
             double salario = Double.parseDouble(txtSalario.getText().trim());
+            double bono = Double.parseDouble(txtBono.getText().trim());
             LocalDate fecha = LocalDate.parse(txtFecha.getText().trim());
             boolean activo = chkActivo.isSelected();
 
-            Empleado emp = new Empleado(id, nombre, depto, salario, fecha, activo);
+            Empleado emp = new Empleado(id, nombre, depto, salario, bono, fecha, activo);
             if (dao.actualizar(emp)) {
                 JOptionPane.showMessageDialog(this, "Empleado actualizado correctamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
                 limpiarCampos();
@@ -239,6 +269,17 @@ public class VentanaPrincipal extends JFrame {
         }
 
         try {
+            double bono = Double.parseDouble(txtBono.getText().trim());
+            if (bono < 0) {
+                JOptionPane.showMessageDialog(this, "El bono no puede ser negativo.", "Validación", JOptionPane.WARNING_MESSAGE);
+                return false;
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Ingrese un monto de bono válido.", "Validación", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+
+        try {
             LocalDate fecha = LocalDate.parse(txtFecha.getText().trim());
             if (fecha.isAfter(LocalDate.now())) {
                 JOptionPane.showMessageDialog(this, "La fecha de contratación no puede ser futura.", "Validación", JOptionPane.WARNING_MESSAGE);
@@ -257,6 +298,7 @@ public class VentanaPrincipal extends JFrame {
         txtNombre.setText("");
         txtDepartamento.setText("");
         txtSalario.setText("");
+        txtBono.setText("0");
         txtFecha.setText("");
         chkActivo.setSelected(true);
         tabla.clearSelection();

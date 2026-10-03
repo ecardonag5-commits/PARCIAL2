@@ -59,11 +59,12 @@ public class Main {
             return;
         }
         for (Empleado e : empleados) {
-            System.out.printf("[%d] %-20s | %-14s | Q%.2f | %s\n",
+            System.out.printf("[%d] %-20s | %-14s | Salario: Q%.2f | Bono: Q%.2f | %s\n",
                     e.getId(),
                     e.getNombreCompleto(),
                     e.getDepartamento(),
                     e.getSalarioMensual(),
+                    e.getBono(),
                     e.getEstadoTexto());
         }
     }
@@ -73,9 +74,10 @@ public class Main {
         String nombre = pedirTextoNoVacio("Nombre completo: ");
         String departamento = pedirTextoNoVacio("Departamento: ");
         double salario = pedirSalarioPositivo();
+        double bono = pedirBono();
         LocalDate fecha = pedirFechaValida();
 
-        Empleado nuevo = new Empleado(nombre, departamento, salario, fecha, true);
+        Empleado nuevo = new Empleado(nombre, departamento, salario, bono, fecha, true);
         if (dao.insertar(nuevo)) {
             System.out.println("Empleado registrado correctamente.");
         } else {
@@ -97,6 +99,7 @@ public class Main {
         String nombre = pedirTextoNoVacio("Nombre completo [" + emp.getNombreCompleto() + "]: ");
         String departamento = pedirTextoNoVacio("Departamento [" + emp.getDepartamento() + "]: ");
         double salario = pedirSalarioPositivo();
+        double bono = pedirBono();
         LocalDate fecha = pedirFechaValida();
 
         System.out.print("¿Sigue activo en la empresa? (S/N): ");
@@ -105,6 +108,7 @@ public class Main {
         emp.setNombreCompleto(nombre);
         emp.setDepartamento(departamento);
         emp.setSalarioMensual(salario);
+        emp.setBono(bono);
         emp.setFechaContratacion(fecha);
         emp.setActivo(activo);
 
@@ -164,6 +168,22 @@ public class Main {
             }
         } while (salario <= 0);
         return salario;
+    }
+
+    private static double pedirBono() {
+        double bono = -1;
+        do {
+            System.out.print("Bono: ");
+            try {
+                bono = Double.parseDouble(sc.nextLine());
+                if (bono < 0) {
+                    System.out.println("El bono no puede ser negativo.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Monto inválido. Ingrese un valor numérico mayor o igual a cero.");
+            }
+        } while (bono < 0);
+        return bono;
     }
 
     private static LocalDate pedirFechaValida() {
